@@ -120,12 +120,12 @@ export default function GuideReviews() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Overall Rating</h3>
                 <div className="text-center">
                   <div className="flex items-center justify-center mb-2">
-                    <span className="text-4xl font-bold text-gray-900">{overallStats.rating}</span>
+                    <span className="text-4xl font-bold text-gray-900">{stats.rating}</span>
                     <div className="ml-2 text-2xl">⭐</div>
                   </div>
-                  <p className="text-sm text-gray-600 mb-4">Total Reviews: {overallStats.totalReviews}</p>
-                  <p className="text-sm text-gray-600 mb-4">5-Star Reviews: {overallStats.fiveStarReviews}</p>
-                  <p className="text-sm text-gray-600">Response Rate: {overallStats.responseRate}%</p>
+                  <p className="text-sm text-gray-600 mb-4">Total Reviews: {stats.totalReviews}</p>
+                  <p className="text-sm text-gray-600 mb-4">5-Star Reviews: {stats.fiveStarReviews}</p>
+                  <p className="text-sm text-gray-600">Response Rate: {stats.responseRate}%</p>
                 </div>
               </div>
             </div>

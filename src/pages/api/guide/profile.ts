@@ -184,7 +184,7 @@ export default async function handler(
       const updatedGuideSnap = await getDoc(guideRef);
       const updatedGuideData = updatedGuideSnap.exists() ? updatedGuideSnap.data() : {};
       const updatedUserSnap = await getDoc(userRef);
-      const updatedUserData = updatedUserSnap.data();
+      const updatedUserData = updatedUserSnap.exists() ? updatedUserSnap.data() : {};
 
       const updatedProfile: GuideProfile = {
         userId: guideId,

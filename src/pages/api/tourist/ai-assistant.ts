@@ -51,7 +51,7 @@ interface ChatMessage {
 // POST - Send voice command to AI backend
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<AIResponse | { success: boolean; code: number; data: ChatMessage[]; error?: string }>
+  res: NextApiResponse<AIResponse | { success: boolean; code: number; data: ChatMessage[]; error?: string; warning?: string }>
 ) {
   // GET - Retrieve chat history
   if (req.method === 'GET') {
