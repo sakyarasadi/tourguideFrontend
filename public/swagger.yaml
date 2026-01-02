@@ -1,0 +1,3380 @@
+openapi: 3.0.3
+info:
+  title: Tour Guide Booking Platform API
+  description: API documentation for the Tour Guide Booking Platform
+  version: 1.0.0
+  contact:
+    name: API Support
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://your-production-url.com
+    description: Production server
+
+paths:
+  /api/bookings/getBookings:
+    get:
+      tags:
+        - Bookings
+      summary: Get bookings with search, filters, sorting and pagination
+      description: |
+        Comprehensive booking retrieval API with support for:
+        - Search across title, destination, touristName, guideName, tourType
+        - Filter by status, guideId, touristId, price range, date range
+        - Sort by various fields (startDate, endDate, agreedPrice, title, destination, status, createdAt)
+        - Pagination with configurable page size (max 100)
+      operationId: getBookings
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Search keyword (searches in title, destination, touristName, guideName, tourType)
+          example: "Kandy"
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, upcoming, completed, cancelled]
+          description: Filter by booking status
+          example: "pending"
+        - in: query
+          name: guideId
+          schema:
+            type: string
+          description: Filter by guide ID
+          example: "GUIDE-001"
+        - in: query
+          name: touristId
+          schema:
+            type: string
+          description: Filter by tourist ID
+          example: "TOURIST-001"
+        - in: query
+          name: minPrice
+          schema:
+            type: number
+            format: float
+          description: Minimum agreed price filter
+          example: 10000
+        - in: query
+          name: maxPrice
+          schema:
+            type: number
+            format: float
+          description: Maximum agreed price filter
+          example: 50000
+        - in: query
+          name: startDateFrom
+          schema:
+            type: string
+            format: date
+          description: Filter bookings starting from this date (YYYY-MM-DD)
+          example: "2025-01-01"
+        - in: query
+          name: startDateTo
+          schema:
+            type: string
+            format: date
+          description: Filter bookings until this start date (YYYY-MM-DD)
+          example: "2025-12-31"
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: [startDate, endDate, agreedPrice, title, destination, status, createdAt]
+            default: startDate
+          description: Field to sort by
+          example: "startDate"
+        - in: query
+          name: sortOrder
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+          description: Sort order (ascending or descending)
+          example: "asc"
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination (1-based)
+          example: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Number of items per page (max 100)
+          example: 10
+      responses:
+        '200':
+          description: Bookings fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetBookingsResponse'
+              example:
+                success: true
+                code: 200
+                data:
+                  - id: "L0CMFGNbsBt7eaQDca7f"
+                    requestId: "REQ-014"
+                    touristId: "TOURIST-014"
+                    touristName: "Charlotte Young"
+                    guideId: "GUIDE-010"
+                    guideName: "Rasika Dissanayake"
+                    title: "Negombo Lagoon Boat Tour"
+                    destination: "Negombo"
+                    startDate: "2025-01-10"
+                    endDate: "2025-01-10"
+                    status: "pending"
+                    agreedPrice: 14000
+                    numberOfPeople: 2
+                    budget: 18000
+                    tourType: "Nature"
+                  - id: "NOLbi6DdGjaaBeARp3RN"
+                    requestId: "REQ-001"
+                    touristId: "TOURIST-001"
+                    touristName: "John Doe"
+                    guideId: "GUIDE-001"
+                    guideName: "Suresh Silva"
+                    title: "Kandy Temple Tour"
+                    destination: "Kandy"
+                    startDate: "2025-01-12"
+                    endDate: "2025-01-13"
+                    status: "pending"
+                    agreedPrice: 20000
+                    numberOfPeople: 2
+                    budget: 25000
+                    tourType: "Cultural"
+                pagination:
+                  page: 1
+                  limit: 10
+                  total: 17
+                  totalPages: 2
+                  hasNextPage: true
+                  hasPreviousPage: false
+                filters:
+                  sortBy: "startDate"
+                  sortOrder: "asc"
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                code: 405
+                error: "Method not allowed"
+                message: "Only GET method is supported"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                code: 500
+                error: "Internal server error"
+                message: "Failed to fetch bookings"
+
+  /api/guide/requests:
+    get:
+      tags:
+        - Guide
+      summary: Browse tour requests with search, filters, sorting and pagination
+      description: |
+        Comprehensive tour request retrieval API for guides with support for:
+        - Search across title, destination, description, tourType, touristName
+        - Filter by tourType, status, touristId, budget range, number of people, date range
+        - Sort by budget, startDate, applicationCount, createdAt
+        - Pagination with configurable page size (max 100)
+      operationId: getTourRequests
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Search keyword (searches in title, destination, description, tourType, touristName)
+          example: "Kandy"
+        - in: query
+          name: tourType
+          schema:
+            type: string
+          description: Filter by tour type (e.g., cultural, wildlife, adventure, beach, hill)
+          example: "cultural"
+        - in: query
+          name: status
+          schema:
+            type: string
+          description: Filter by request status (e.g., open, closed)
+          example: "open"
+        - in: query
+          name: touristId
+          schema:
+            type: string
+          description: Filter by tourist ID
+          example: "TOURIST-001"
+        - in: query
+          name: minBudget
+          schema:
+            type: number
+            format: float
+          description: Minimum budget filter
+          example: 10000
+        - in: query
+          name: maxBudget
+          schema:
+            type: number
+            format: float
+          description: Maximum budget filter
+          example: 50000
+        - in: query
+          name: minPeople
+          schema:
+            type: integer
+          description: Minimum number of people filter
+          example: 1
+        - in: query
+          name: maxPeople
+          schema:
+            type: integer
+          description: Maximum number of people filter
+          example: 10
+        - in: query
+          name: startDateFrom
+          schema:
+            type: string
+            format: date
+          description: Filter requests starting from this date (YYYY-MM-DD)
+          example: "2025-01-01"
+        - in: query
+          name: startDateTo
+          schema:
+            type: string
+            format: date
+          description: Filter requests until this start date (YYYY-MM-DD)
+          example: "2025-12-31"
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: [budget, startDate, applicationCount, createdAt]
+            default: createdAt
+          description: Field to sort by
+          example: "createdAt"
+        - in: query
+          name: sortOrder
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort order (ascending or descending)
+          example: "desc"
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination (1-based)
+          example: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Number of items per page (max 100)
+          example: 10
+      responses:
+        '200':
+          description: Tour requests fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTourRequestsResponse'
+              example:
+                success: true
+                code: 200
+                data:
+                  - id: "REQ-001"
+                    title: "Kandy Temple Tour"
+                    destination: "Kandy"
+                    startDate: "2025-01-12"
+                    endDate: "2025-01-13"
+                    budget: 25000
+                    numberOfPeople: 2
+                    tourType: "Cultural"
+                    languages: ["English", "Sinhala"]
+                    description: "Explore the beautiful temples and cultural sites in Kandy"
+                    requirements: "Comfortable walking shoes required"
+                    touristId: "TOURIST-001"
+                    touristName: "John Doe"
+                    applicationCount: 5
+                    status: "open"
+                pagination:
+                  page: 1
+                  limit: 10
+                  total: 25
+                  totalPages: 3
+                  hasNextPage: true
+                  hasPreviousPage: false
+                filters:
+                  tourType: "Cultural"
+                  status: "open"
+                  sortBy: "createdAt"
+                  sortOrder: "desc"
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                code: 405
+                error: "Method not allowed"
+                message: "Only GET method is supported"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                code: 500
+                error: "Internal server error"
+                message: "Failed to fetch tour requests"
+
+  /api/guide/applications:
+    get:
+      tags:
+        - Guide
+      summary: Get guide applications with search, filters, sorting and pagination
+      description: |
+        Comprehensive guide application retrieval API with support for:
+        - Search across tourTitle, destination, tourType, touristName
+        - Filter by status, proposed price range, agreed price range
+        - Sort by startDate, proposedPrice, agreedPrice, createdAt, updatedAt
+        - Pagination with configurable page size (max 100)
+      operationId: getGuideApplications
+      parameters:
+        - in: query
+          name: guideId
+          required: true
+          schema:
+            type: string
+          description: Guide user ID (required)
+          example: "GUIDE-001"
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Search keyword (searches in tourTitle, destination, tourType, touristName)
+          example: "Kandy"
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, selected, rejected]
+          description: Filter by application status
+          example: "pending"
+        - in: query
+          name: minProposedPrice
+          schema:
+            type: number
+            format: float
+          description: Minimum proposed price filter
+          example: 10000
+        - in: query
+          name: maxProposedPrice
+          schema:
+            type: number
+            format: float
+          description: Maximum proposed price filter
+          example: 50000
+        - in: query
+          name: minAgreedPrice
+          schema:
+            type: number
+            format: float
+          description: Minimum agreed price filter
+          example: 10000
+        - in: query
+          name: maxAgreedPrice
+          schema:
+            type: number
+            format: float
+          description: Maximum agreed price filter
+          example: 50000
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: [startDate, proposedPrice, agreedPrice, createdAt, updatedAt]
+            default: updatedAt
+          description: Field to sort by
+          example: "updatedAt"
+        - in: query
+          name: sortOrder
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort order (ascending or descending)
+          example: "desc"
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination (1-based)
+          example: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Number of items per page (max 100)
+          example: 10
+      responses:
+        '200':
+          description: Guide applications fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetGuideApplicationsResponse'
+              example:
+                success: true
+                code: 200
+                data:
+                  - id: "APP-001"
+                    requestId: "REQ-001"
+                    tourTitle: "Kandy Temple Tour"
+                    destination: "Kandy"
+                    touristName: "John Doe"
+                    startDate: "2025-01-12"
+                    endDate: "2025-01-13"
+                    proposedPrice: 22000
+                    touristBudget: 25000
+                    status: "pending"
+                    agreedPrice: null
+                    competitorCount: 4
+                    tourType: "Cultural"
+                pagination:
+                  page: 1
+                  limit: 10
+                  total: 15
+                  totalPages: 2
+                  hasNextPage: true
+                  hasPreviousPage: false
+                filters:
+                  guideId: "GUIDE-001"
+                  status: "pending"
+                  sortBy: "updatedAt"
+                  sortOrder: "desc"
+        '400':
+          description: Bad request - guideId is required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                code: 400
+                error: "Bad request"
+                message: "guideId is required as a query parameter"
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                code: 405
+                error: "Method not allowed"
+                message: "Only GET method is supported"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                code: 500
+                error: "Internal server error"
+                message: "Failed to fetch guide applications"
+
+  /api/tourist/requests:
+    get:
+      tags:
+        - Tourist
+      summary: Get tour requests with search, filters, sorting and pagination
+      description: |
+        Comprehensive tour request retrieval API for tourists with support for:
+        - Search across title, destination, description, tourType, touristName
+        - Filter by tourType, status, touristId, budget range, people count, date range
+        - Sort by various fields (budget, startDate, applicationCount, createdAt, title, destination)
+        - Pagination with configurable page size (max 100)
+      operationId: getTouristRequests
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Search keyword (searches in title, destination, description, tourType, touristName)
+          example: "Kandy"
+        - in: query
+          name: tourType
+          schema:
+            type: string
+          description: Filter by tour type (e.g., cultural, wildlife, adventure, beach, hill)
+          example: "cultural"
+        - in: query
+          name: status
+          schema:
+            type: string
+          description: Filter by request status (e.g., open, accepted, completed, cancelled)
+          example: "open"
+        - in: query
+          name: touristId
+          schema:
+            type: string
+          description: Filter by tourist ID
+          example: "TOURIST-001"
+        - in: query
+          name: minBudget
+          schema:
+            type: number
+            format: float
+          description: Minimum budget filter
+          example: 10000
+        - in: query
+          name: maxBudget
+          schema:
+            type: number
+            format: float
+          description: Maximum budget filter
+          example: 50000
+        - in: query
+          name: minPeople
+          schema:
+            type: integer
+          description: Minimum number of people filter
+          example: 1
+        - in: query
+          name: maxPeople
+          schema:
+            type: integer
+          description: Maximum number of people filter
+          example: 10
+        - in: query
+          name: startDateFrom
+          schema:
+            type: string
+            format: date
+          description: Filter requests starting from this date (YYYY-MM-DD)
+          example: "2025-01-01"
+        - in: query
+          name: startDateTo
+          schema:
+            type: string
+            format: date
+          description: Filter requests until this start date (YYYY-MM-DD)
+          example: "2025-12-31"
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: [budget, startDate, applicationCount, createdAt, title, destination]
+            default: createdAt
+          description: Field to sort by
+          example: "createdAt"
+        - in: query
+          name: sortOrder
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort order (ascending or descending)
+          example: "desc"
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination (1-based)
+          example: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Number of items per page (max 100)
+          example: 10
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTourRequestsResponse'
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - Tourist
+      summary: Create a new tour request
+      description: Create a new tour request as a tourist
+      operationId: createTourRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - destination
+                - startDate
+                - endDate
+                - budget
+                - numberOfPeople
+                - tourType
+                - description
+                - touristId
+              properties:
+                title:
+                  type: string
+                  example: "5-Day Cultural Tour of Ancient Cities"
+                destination:
+                  type: string
+                  example: "Kandy, Sigiriya"
+                startDate:
+                  type: string
+                  format: date
+                  example: "2025-01-12"
+                endDate:
+                  type: string
+                  format: date
+                  example: "2025-01-16"
+                budget:
+                  type: number
+                  format: float
+                  example: 25000
+                numberOfPeople:
+                  type: integer
+                  example: 2
+                tourType:
+                  type: string
+                  example: "cultural"
+                languages:
+                  type: array
+                  items:
+                    type: string
+                  example: ["English", "Sinhala"]
+                description:
+                  type: string
+                  example: "Explore the beautiful temples and cultural sites"
+                requirements:
+                  type: string
+                  nullable: true
+                  example: "Comfortable walking shoes required"
+                touristId:
+                  type: string
+                  example: "TOURIST-001"
+                touristName:
+                  type: string
+                  nullable: true
+                  example: "John Doe"
+                touristEmail:
+                  type: string
+                  nullable: true
+                  example: "john@example.com"
+      responses:
+        '201':
+          description: Tour request created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  code:
+                    type: integer
+                    example: 201
+                  data:
+                    $ref: '#/components/schemas/TourRequest'
+                  message:
+                    type: string
+                    example: "Tour request created successfully"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/tourist/requests/{id}:
+    get:
+      tags:
+        - Tourist
+      summary: Get a single tour request by ID
+      description: Retrieve details of a specific tour request
+      operationId: getTourRequestById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Tour request ID
+          example: "REQ-001"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  code:
+                    type: integer
+                    example: 200
+                  data:
+                    $ref: '#/components/schemas/TourRequest'
+        '404':
+          description: Tour request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - Tourist
+      summary: Update a tour request
+      description: Update an existing tour request (only if status is open)
+      operationId: updateTourRequest
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Tour request ID
+          example: "REQ-001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                destination:
+                  type: string
+                startDate:
+                  type: string
+                  format: date
+                endDate:
+                  type: string
+                  format: date
+                budget:
+                  type: number
+                  format: float
+                numberOfPeople:
+                  type: integer
+                tourType:
+                  type: string
+                languages:
+                  type: array
+                  items:
+                    type: string
+                description:
+                  type: string
+                requirements:
+                  type: string
+      responses:
+        '200':
+          description: Tour request updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  code:
+                    type: integer
+                    example: 200
+                  data:
+                    $ref: '#/components/schemas/TourRequest'
+                  message:
+                    type: string
+                    example: "Tour request updated successfully"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Tour request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - Tourist
+      summary: Cancel a tour request
+      description: Cancel an existing tour request (marks as cancelled)
+      operationId: cancelTourRequest
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Tour request ID
+          example: "REQ-001"
+      responses:
+        '200':
+          description: Tour request cancelled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "Tour request cancelled successfully"
+        '404':
+          description: Tour request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/tourist/bookings:
+    get:
+      tags:
+        - Tourist
+      summary: Get tourist bookings with search, filters, sorting and pagination
+      description: |
+        Comprehensive booking retrieval API for tourists with support for:
+        - Search across title, destination, touristName, guideName, tourType
+        - Filter by status, guideId, touristId, price range, date range
+        - Sort by various fields (startDate, endDate, agreedPrice, title, destination, status, createdAt)
+        - Pagination with configurable page size (max 100)
+      operationId: getTouristBookings
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Search keyword (searches in title, destination, touristName, guideName, tourType)
+          example: "Kandy"
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, upcoming, completed, cancelled]
+          description: Filter by booking status
+          example: "pending"
+        - in: query
+          name: guideId
+          schema:
+            type: string
+          description: Filter by guide ID
+          example: "GUIDE-001"
+        - in: query
+          name: touristId
+          schema:
+            type: string
+          description: Filter by tourist ID
+          example: "TOURIST-001"
+        - in: query
+          name: minPrice
+          schema:
+            type: number
+            format: float
+          description: Minimum agreed price filter
+          example: 10000
+        - in: query
+          name: maxPrice
+          schema:
+            type: number
+            format: float
+          description: Maximum agreed price filter
+          example: 50000
+        - in: query
+          name: startDateFrom
+          schema:
+            type: string
+            format: date
+          description: Filter bookings starting from this date (YYYY-MM-DD)
+          example: "2025-01-01"
+        - in: query
+          name: startDateTo
+          schema:
+            type: string
+            format: date
+          description: Filter bookings until this start date (YYYY-MM-DD)
+          example: "2025-12-31"
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: [startDate, endDate, agreedPrice, title, destination, status, createdAt]
+            default: startDate
+          description: Field to sort by
+          example: "startDate"
+        - in: query
+          name: sortOrder
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+          description: Sort order (ascending or descending)
+          example: "asc"
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination (1-based)
+          example: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Number of items per page (max 100)
+          example: 10
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetBookingsResponse'
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/tourist/applications:
+    get:
+      tags:
+        - Tourist
+      summary: Get applications for a tour request
+      description: |
+        Retrieve all guide applications for a specific tour request with support for:
+        - Filter by status, price range
+        - Sort by proposedPrice, rating, createdAt, updatedAt, guideName
+        - Pagination with configurable page size (max 100)
+      operationId: getTouristApplications
+      parameters:
+        - in: query
+          name: requestId
+          required: true
+          schema:
+            type: string
+          description: Tour request ID
+          example: "REQ-001"
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, selected, rejected]
+          description: Filter by application status
+          example: "pending"
+        - in: query
+          name: minPrice
+          schema:
+            type: number
+            format: float
+          description: Minimum proposed price filter
+          example: 10000
+        - in: query
+          name: maxPrice
+          schema:
+            type: number
+            format: float
+          description: Maximum proposed price filter
+          example: 50000
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: [proposedPrice, rating, createdAt, updatedAt, guideName]
+            default: updatedAt
+          description: Field to sort by
+          example: "updatedAt"
+        - in: query
+          name: sortOrder
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort order (ascending or descending)
+          example: "desc"
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination (1-based)
+          example: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Number of items per page (max 100)
+          example: 10
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  code:
+                    type: integer
+                    example: 200
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: "APP-001"
+                        requestId:
+                          type: string
+                          example: "REQ-001"
+                        guideId:
+                          type: string
+                          example: "GUIDE-001"
+                        guideName:
+                          type: string
+                          example: "John Guide"
+                        guideEmail:
+                          type: string
+                          nullable: true
+                          example: "guide@example.com"
+                        proposedPrice:
+                          type: number
+                          format: float
+                          example: 22000
+                        coverLetter:
+                          type: string
+                          example: "I have extensive experience..."
+                        status:
+                          type: string
+                          enum: [pending, selected, rejected]
+                          example: "pending"
+                        experience:
+                          type: string
+                          nullable: true
+                        languages:
+                          type: array
+                          items:
+                            type: string
+                          nullable: true
+                        rating:
+                          type: number
+                          nullable: true
+                        reviews:
+                          type: integer
+                          nullable: true
+                        createdAt:
+                          type: string
+                          format: date-time
+                          nullable: true
+                        updatedAt:
+                          type: string
+                          format: date-time
+                          nullable: true
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  filters:
+                    type: object
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/tourist/applications/{id}/accept:
+    post:
+      tags:
+        - Tourist
+      summary: Accept a guide application
+      description: Accept a guide application for a tour request. This will mark the application as selected, reject all other applications, update the request status, and create a booking.
+      operationId: acceptApplication
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Application ID
+          example: "APP-001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - requestId
+              properties:
+                requestId:
+                  type: string
+                  description: Tour request ID
+                  example: "REQ-001"
+      responses:
+        '200':
+          description: Application accepted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "Application accepted successfully. Booking created."
+                  data:
+                    type: object
+                    properties:
+                      bookingId:
+                        type: string
+                        example: "BOOKING-001"
+                      requestId:
+                        type: string
+                        example: "REQ-001"
+                      applicationId:
+                        type: string
+                        example: "APP-001"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/guide/dashboard:
+    get:
+      tags:
+        - Guide
+      summary: Get guide dashboard statistics
+      description: Retrieve comprehensive dashboard statistics for a guide
+      operationId: getGuideDashboard
+      parameters:
+        - in: query
+          name: guideId
+          required: true
+          schema:
+            type: string
+          description: Guide user ID
+      responses:
+        '200':
+          description: Dashboard stats fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  code:
+                    type: integer
+                  data:
+                    type: object
+                    properties:
+                      totalBookings:
+                        type: integer
+                      earnings:
+                        type: number
+                      averageRating:
+                        type: number
+                      completedTours:
+                        type: integer
+                      pendingBookings:
+                        type: integer
+                      upcomingBookings:
+                        type: integer
+                      totalApplications:
+                        type: integer
+                      acceptedApplications:
+                        type: integer
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/guide/bookings:
+    get:
+      tags:
+        - Guide
+      summary: Get guide bookings with search, filters, sorting and pagination
+      operationId: getGuideBookings
+      parameters:
+        - in: query
+          name: guideId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, upcoming, completed, cancelled]
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            default: startDate
+        - in: query
+          name: sortOrder
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+            maximum: 100
+      responses:
+        '200':
+          description: Bookings fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetGuideBookingsResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/guide/bookings/{id}:
+    patch:
+      tags:
+        - Guide
+      summary: Update booking status
+      operationId: updateGuideBooking
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [pending, upcoming, completed, cancelled]
+      responses:
+        '200':
+          description: Booking updated successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/guide/reviews:
+    get:
+      tags:
+        - Guide
+      summary: Get guide reviews with search, filters, sorting and pagination
+      operationId: getGuideReviews
+      parameters:
+        - in: query
+          name: guideId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: minRating
+          schema:
+            type: integer
+        - in: query
+          name: maxRating
+          schema:
+            type: integer
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            default: createdAt
+        - in: query
+          name: sortOrder
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+            maximum: 100
+      responses:
+        '200':
+          description: Reviews fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetGuideReviewsResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/guide/payouts:
+    get:
+      tags:
+        - Guide
+      summary: Get guide payouts and earnings with search, filters, sorting and pagination
+      operationId: getGuidePayouts
+      parameters:
+        - in: query
+          name: guideId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: [earning, payout, refund]
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, cleared, completed, failed]
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            default: createdAt
+        - in: query
+          name: sortOrder
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+            maximum: 100
+      responses:
+        '200':
+          description: Payouts fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetGuidePayoutsResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/guide/pricing:
+    get:
+      tags:
+        - Guide
+      summary: Get guide pricing information
+      operationId: getGuidePricing
+      parameters:
+        - in: query
+          name: guideId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pricing fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuidePricingResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - Guide
+      summary: Update guide pricing
+      operationId: updateGuidePricing
+      parameters:
+        - in: query
+          name: guideId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuidePricing'
+      responses:
+        '200':
+          description: Pricing updated successfully
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/guide/profile:
+    get:
+      tags:
+        - Guide
+      summary: Get guide profile
+      operationId: getGuideProfile
+      parameters:
+        - in: query
+          name: guideId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Profile fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuideProfileResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - Guide
+      summary: Update guide profile
+      operationId: updateGuideProfile
+      parameters:
+        - in: query
+          name: guideId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuideProfile'
+      responses:
+        '200':
+          description: Profile updated successfully
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/login:
+    post:
+      tags:
+        - Admin
+      summary: Admin login
+      description: Authenticate an admin user and return admin data
+      operationId: adminLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Admin email address
+                  example: "admin@example.com"
+                password:
+                  type: string
+                  format: password
+                  description: Admin password
+                  example: "password123"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "Login successful"
+                  data:
+                    type: object
+                    properties:
+                      uid:
+                        type: string
+                        example: "admin-uid-123"
+                      email:
+                        type: string
+                        example: "admin@example.com"
+                      firstName:
+                        type: string
+                        example: "Admin"
+                      lastName:
+                        type: string
+                        example: "User"
+                      userType:
+                        type: string
+                        example: "admin"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                code: 400
+                error: "Bad Request"
+                message: "Email and password are required"
+        '401':
+          description: Unauthorized - Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                code: 401
+                error: "Authentication failed"
+                message: "Incorrect password"
+        '403':
+          description: Forbidden - Not an admin user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                code: 403
+                error: "Forbidden"
+                message: "Access denied. Admin privileges required."
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                code: 404
+                error: "Not Found"
+                message: "No account found with this email"
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                code: 429
+                error: "Authentication failed"
+                message: "Too many failed attempts. Please try again later"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/admins:
+    get:
+      tags:
+        - Admin
+      summary: Get admins with search, filters, sorting and pagination
+      description: |
+        Comprehensive admin user retrieval API with support for:
+        - Search across firstName, lastName, email, phone, role
+        - Filter by role, isActive status
+        - Sort by firstName, lastName, email, role, createdAt, updatedAt
+        - Pagination with configurable page size (max 100)
+      operationId: getAdmins
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Search keyword (searches in firstName, lastName, email, phone, role)
+          example: "John"
+        - in: query
+          name: role
+          schema:
+            type: string
+          description: Filter by admin role
+          example: "admin"
+        - in: query
+          name: isActive
+          schema:
+            type: boolean
+          description: Filter by active status
+          example: true
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: [firstName, lastName, email, role, createdAt, updatedAt]
+            default: createdAt
+          description: Field to sort by
+          example: "createdAt"
+        - in: query
+          name: sortOrder
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort order (ascending or descending)
+          example: "desc"
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination (1-based)
+          example: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Number of items per page (max 100)
+          example: 10
+      responses:
+        '200':
+          description: Admins fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAdminsResponse'
+              example:
+                success: true
+                code: 200
+                data:
+                  - id: "admin-uid-123"
+                    uid: "admin-uid-123"
+                    email: "admin@example.com"
+                    firstName: "Admin"
+                    lastName: "User"
+                    phone: "+1234567890"
+                    userType: "admin"
+                    role: "admin"
+                    isActive: true
+                pagination:
+                  page: 1
+                  limit: 10
+                  total: 5
+                  totalPages: 1
+                  hasNextPage: false
+                  hasPreviousPage: false
+                filters:
+                  sortBy: "createdAt"
+                  sortOrder: "desc"
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/guide-verifications:
+    get:
+      tags:
+        - Admin
+      summary: Get guide verifications with search, filters, sorting and pagination
+      description: |
+        Comprehensive guide verification retrieval API with support for:
+        - Search across firstName, lastName, email, phone
+        - Filter by status (pending, approved, rejected)
+        - Sort by firstName, lastName, email, status, createdAt, updatedAt
+        - Pagination with configurable page size (max 100)
+      operationId: getGuideVerifications
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Search keyword (searches in firstName, lastName, email, phone)
+          example: "John"
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, approved, rejected]
+          description: Filter by verification status
+          example: "pending"
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: [firstName, lastName, email, status, createdAt, updatedAt]
+            default: createdAt
+          description: Field to sort by
+          example: "createdAt"
+        - in: query
+          name: sortOrder
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort order (ascending or descending)
+          example: "desc"
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination (1-based)
+          example: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Number of items per page (max 100)
+          example: 10
+      responses:
+        '200':
+          description: Guide verifications fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetGuideVerificationsResponse'
+              example:
+                success: true
+                code: 200
+                data:
+                  - id: "guide-uid-123"
+                    userId: "guide-uid-123"
+                    email: "guide@example.com"
+                    firstName: "John"
+                    lastName: "Guide"
+                    phone: "+1234567890"
+                    status: "pending"
+                    nicDocument: "https://storage.example.com/nic-doc.pdf"
+                    touristDeptIdDocument: "https://storage.example.com/tourist-dept-id.pdf"
+                    policeReportDocument: "https://storage.example.com/police-report.pdf"
+                pagination:
+                  page: 1
+                  limit: 10
+                  total: 15
+                  totalPages: 2
+                  hasNextPage: true
+                  hasPreviousPage: false
+                filters:
+                  status: "pending"
+                  sortBy: "createdAt"
+                  sortOrder: "desc"
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/guide-verifications/{id}/approve:
+    post:
+      tags:
+        - Admin
+      summary: Approve a guide verification
+      description: Approve a guide's verification request. Updates both guide and user status to approved.
+      operationId: approveGuide
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Guide user ID
+          example: "guide-uid-123"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reviewedBy:
+                  type: string
+                  description: Admin user who is reviewing
+                  example: "admin"
+      responses:
+        '200':
+          description: Guide approved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "Guide approved successfully"
+                  data:
+                    type: object
+                    properties:
+                      userId:
+                        type: string
+                        example: "guide-uid-123"
+                      status:
+                        type: string
+                        example: "approved"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                code: 400
+                error: "Bad Request"
+                message: "Guide ID is required"
+        '404':
+          description: Guide not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                code: 404
+                error: "Not Found"
+                message: "Guide not found"
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/guide-verifications/{id}/reject:
+    post:
+      tags:
+        - Admin
+      summary: Reject a guide verification
+      description: Reject a guide's verification request with a reason. Updates both guide and user status to rejected.
+      operationId: rejectGuide
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Guide user ID
+          example: "guide-uid-123"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - rejectionReason
+              properties:
+                rejectionReason:
+                  type: string
+                  description: Reason for rejection
+                  example: "Documents are not clear or incomplete"
+                reviewedBy:
+                  type: string
+                  description: Admin user who is reviewing
+                  example: "admin"
+      responses:
+        '200':
+          description: Guide rejected successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "Guide rejected successfully"
+                  data:
+                    type: object
+                    properties:
+                      userId:
+                        type: string
+                        example: "guide-uid-123"
+                      status:
+                        type: string
+                        example: "rejected"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                code: 400
+                error: "Bad Request"
+                message: "Rejection reason is required"
+        '404':
+          description: Guide not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                code: 404
+                error: "Not Found"
+                message: "Guide not found"
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    Booking:
+      type: object
+      required:
+        - id
+        - requestId
+        - touristId
+        - guideId
+        - title
+        - destination
+        - startDate
+        - endDate
+        - status
+      properties:
+        id:
+          type: string
+          description: Unique booking identifier
+          example: "L0CMFGNbsBt7eaQDca7f"
+        requestId:
+          type: string
+          description: Associated tour request ID
+          example: "REQ-014"
+        touristId:
+          type: string
+          description: Tourist user ID
+          example: "TOURIST-014"
+        touristName:
+          type: string
+          nullable: true
+          description: Tourist name
+          example: "Charlotte Young"
+        guideId:
+          type: string
+          description: Guide user ID
+          example: "GUIDE-010"
+        guideName:
+          type: string
+          nullable: true
+          description: Guide name
+          example: "Rasika Dissanayake"
+        title:
+          type: string
+          description: Tour title
+          example: "Negombo Lagoon Boat Tour"
+        destination:
+          type: string
+          description: Tour destination
+          example: "Negombo"
+        startDate:
+          type: string
+          format: date
+          description: Tour start date (YYYY-MM-DD)
+          example: "2025-01-10"
+        endDate:
+          type: string
+          format: date
+          description: Tour end date (YYYY-MM-DD)
+          example: "2025-01-10"
+        status:
+          type: string
+          enum: [pending, upcoming, completed, cancelled]
+          description: Booking status
+          example: "pending"
+        agreedPrice:
+          type: number
+          format: float
+          nullable: true
+          description: Agreed price for the tour
+          example: 14000
+        numberOfPeople:
+          type: integer
+          nullable: true
+          description: Number of people in the tour
+          example: 2
+        budget:
+          type: number
+          format: float
+          nullable: true
+          description: Original budget
+          example: 18000
+        tourType:
+          type: string
+          nullable: true
+          description: Type of tour
+          example: "Nature"
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Booking creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Booking last update timestamp
+    Pagination:
+      type: object
+      required:
+        - page
+        - limit
+        - total
+        - totalPages
+        - hasNextPage
+        - hasPreviousPage
+      properties:
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        limit:
+          type: integer
+          description: Items per page
+          example: 10
+        total:
+          type: integer
+          description: Total number of bookings matching filters
+          example: 17
+        totalPages:
+          type: integer
+          description: Total number of pages
+          example: 2
+        hasNextPage:
+          type: boolean
+          description: Whether there is a next page
+          example: true
+        hasPreviousPage:
+          type: boolean
+          description: Whether there is a previous page
+          example: false
+    GetBookingsFilters:
+      type: object
+      properties:
+        search:
+          type: string
+          description: Applied search term
+          example: "Kandy"
+        status:
+          type: string
+          description: Applied status filter
+          example: "pending"
+        guideId:
+          type: string
+          description: Applied guide ID filter
+          example: "GUIDE-001"
+        touristId:
+          type: string
+          description: Applied tourist ID filter
+          example: "TOURIST-001"
+        minPrice:
+          type: number
+          format: float
+          description: Applied minimum price filter
+          example: 10000
+        maxPrice:
+          type: number
+          format: float
+          description: Applied maximum price filter
+          example: 50000
+        startDateFrom:
+          type: string
+          format: date
+          description: Applied start date from filter
+          example: "2025-01-01"
+        startDateTo:
+          type: string
+          format: date
+          description: Applied start date to filter
+          example: "2025-12-31"
+        sortBy:
+          type: string
+          description: Applied sort field
+          example: "startDate"
+        sortOrder:
+          type: string
+          description: Applied sort order
+          example: "asc"
+    GetBookingsResponse:
+      type: object
+      required:
+        - success
+        - code
+        - data
+        - pagination
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Booking'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        filters:
+          $ref: '#/components/schemas/GetBookingsFilters'
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - code
+        - error
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+          description: HTTP status code
+          example: 500
+        error:
+          type: string
+          description: Error type
+          example: "Internal server error"
+        message:
+          type: string
+          description: Detailed error message
+          example: "Failed to fetch bookings"
+    TourRequest:
+      type: object
+      required:
+        - id
+        - title
+        - destination
+        - startDate
+        - endDate
+        - budget
+        - numberOfPeople
+        - tourType
+        - languages
+        - description
+        - touristId
+      properties:
+        id:
+          type: string
+          description: Unique tour request identifier
+          example: "REQ-001"
+        title:
+          type: string
+          description: Tour request title
+          example: "Kandy Temple Tour"
+        destination:
+          type: string
+          description: Tour destination
+          example: "Kandy"
+        startDate:
+          type: string
+          format: date
+          description: Tour start date (YYYY-MM-DD)
+          example: "2025-01-12"
+        endDate:
+          type: string
+          format: date
+          description: Tour end date (YYYY-MM-DD)
+          example: "2025-01-13"
+        budget:
+          type: number
+          format: float
+          description: Tourist's budget for the tour
+          example: 25000
+        numberOfPeople:
+          type: integer
+          description: Number of people in the tour
+          example: 2
+        tourType:
+          type: string
+          description: Type of tour (e.g., cultural, wildlife, adventure, beach, hill)
+          example: "Cultural"
+        languages:
+          type: array
+          items:
+            type: string
+          description: Required languages for the guide
+          example: ["English", "Sinhala"]
+        description:
+          type: string
+          description: Tour description
+          example: "Explore the beautiful temples and cultural sites in Kandy"
+        requirements:
+          type: string
+          nullable: true
+          description: Special requirements for the tour
+          example: "Comfortable walking shoes required"
+        touristId:
+          type: string
+          description: Tourist user ID who created the request
+          example: "TOURIST-001"
+        touristName:
+          type: string
+          nullable: true
+          description: Tourist name
+          example: "John Doe"
+        applicationCount:
+          type: integer
+          nullable: true
+          description: Number of applications received for this request
+          example: 5
+        status:
+          type: string
+          nullable: true
+          description: Request status (e.g., open, closed)
+          example: "open"
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Request creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Request last update timestamp
+    GetTourRequestsFilters:
+      type: object
+      properties:
+        search:
+          type: string
+          description: Applied search term
+          example: "Kandy"
+        tourType:
+          type: string
+          description: Applied tour type filter
+          example: "cultural"
+        status:
+          type: string
+          description: Applied status filter
+          example: "open"
+        touristId:
+          type: string
+          description: Applied tourist ID filter
+          example: "TOURIST-001"
+        minBudget:
+          type: number
+          format: float
+          description: Applied minimum budget filter
+          example: 10000
+        maxBudget:
+          type: number
+          format: float
+          description: Applied maximum budget filter
+          example: 50000
+        minPeople:
+          type: integer
+          description: Applied minimum people filter
+          example: 1
+        maxPeople:
+          type: integer
+          description: Applied maximum people filter
+          example: 10
+        startDateFrom:
+          type: string
+          format: date
+          description: Applied start date from filter
+          example: "2025-01-01"
+        startDateTo:
+          type: string
+          format: date
+          description: Applied start date to filter
+          example: "2025-12-31"
+        sortBy:
+          type: string
+          description: Applied sort field
+          example: "createdAt"
+        sortOrder:
+          type: string
+          description: Applied sort order
+          example: "desc"
+    GetTourRequestsResponse:
+      type: object
+      required:
+        - success
+        - code
+        - data
+        - pagination
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TourRequest'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        filters:
+          $ref: '#/components/schemas/GetTourRequestsFilters'
+    GuideApplication:
+      type: object
+      required:
+        - id
+        - requestId
+        - tourTitle
+        - destination
+        - startDate
+        - endDate
+        - status
+      properties:
+        id:
+          type: string
+          description: Unique application identifier
+          example: "APP-001"
+        requestId:
+          type: string
+          description: Associated tour request ID
+          example: "REQ-001"
+        tourTitle:
+          type: string
+          description: Tour title from the request
+          example: "Kandy Temple Tour"
+        destination:
+          type: string
+          description: Tour destination
+          example: "Kandy"
+        touristName:
+          type: string
+          nullable: true
+          description: Tourist name
+          example: "John Doe"
+        startDate:
+          type: string
+          format: date
+          description: Tour start date (YYYY-MM-DD)
+          example: "2025-01-12"
+        endDate:
+          type: string
+          format: date
+          description: Tour end date (YYYY-MM-DD)
+          example: "2025-01-13"
+        proposedPrice:
+          type: number
+          format: float
+          nullable: true
+          description: Price proposed by the guide
+          example: 22000
+        touristBudget:
+          type: number
+          format: float
+          nullable: true
+          description: Tourist's budget for the tour
+          example: 25000
+        status:
+          type: string
+          enum: [pending, selected, rejected]
+          description: Application status
+          example: "pending"
+        agreedPrice:
+          type: number
+          format: float
+          nullable: true
+          description: Final agreed price (if application is selected)
+          example: 22000
+        competitorCount:
+          type: integer
+          nullable: true
+          description: Number of other applications for the same request
+          example: 4
+        tourType:
+          type: string
+          nullable: true
+          description: Type of tour
+          example: "Cultural"
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Application creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Application last update timestamp
+    GetGuideApplicationsFilters:
+      type: object
+      required:
+        - guideId
+      properties:
+        guideId:
+          type: string
+          description: Guide ID filter (required)
+          example: "GUIDE-001"
+        search:
+          type: string
+          description: Applied search term
+          example: "Kandy"
+        status:
+          type: string
+          description: Applied status filter
+          example: "pending"
+        minProposedPrice:
+          type: number
+          format: float
+          description: Applied minimum proposed price filter
+          example: 10000
+        maxProposedPrice:
+          type: number
+          format: float
+          description: Applied maximum proposed price filter
+          example: 50000
+        minAgreedPrice:
+          type: number
+          format: float
+          description: Applied minimum agreed price filter
+          example: 10000
+        maxAgreedPrice:
+          type: number
+          format: float
+          description: Applied maximum agreed price filter
+          example: 50000
+        sortBy:
+          type: string
+          description: Applied sort field
+          example: "updatedAt"
+        sortOrder:
+          type: string
+          description: Applied sort order
+          example: "desc"
+    GetGuideApplicationsResponse:
+      type: object
+      required:
+        - success
+        - code
+        - data
+        - pagination
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuideApplication'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        filters:
+          $ref: '#/components/schemas/GetGuideApplicationsFilters'
+    Admin:
+      type: object
+      required:
+        - id
+        - uid
+        - email
+        - firstName
+        - lastName
+        - userType
+      properties:
+        id:
+          type: string
+          description: Admin user ID
+          example: "admin-uid-123"
+        uid:
+          type: string
+          description: Admin user ID (same as id)
+          example: "admin-uid-123"
+        email:
+          type: string
+          format: email
+          description: Admin email address
+          example: "admin@example.com"
+        firstName:
+          type: string
+          description: Admin first name
+          example: "Admin"
+        lastName:
+          type: string
+          description: Admin last name
+          example: "User"
+        phone:
+          type: string
+          nullable: true
+          description: Admin phone number
+          example: "+1234567890"
+        userType:
+          type: string
+          description: User type (always "admin")
+          example: "admin"
+        role:
+          type: string
+          nullable: true
+          description: Admin role
+          example: "admin"
+        isActive:
+          type: boolean
+          nullable: true
+          description: Whether the admin account is active
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Account creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Account last update timestamp
+    GetAdminsResponse:
+      type: object
+      required:
+        - success
+        - code
+        - data
+        - pagination
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Admin'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        filters:
+          type: object
+          properties:
+            search:
+              type: string
+              description: Applied search term
+            role:
+              type: string
+              description: Applied role filter
+            isActive:
+              type: boolean
+              description: Applied active status filter
+            sortBy:
+              type: string
+              description: Applied sort field
+            sortOrder:
+              type: string
+              description: Applied sort order
+    GuideVerification:
+      type: object
+      required:
+        - id
+        - userId
+        - email
+        - firstName
+        - lastName
+        - phone
+        - status
+      properties:
+        id:
+          type: string
+          description: Guide verification ID (same as userId)
+          example: "guide-uid-123"
+        userId:
+          type: string
+          description: Guide user ID
+          example: "guide-uid-123"
+        email:
+          type: string
+          format: email
+          description: Guide email address
+          example: "guide@example.com"
+        firstName:
+          type: string
+          description: Guide first name
+          example: "John"
+        lastName:
+          type: string
+          description: Guide last name
+          example: "Guide"
+        phone:
+          type: string
+          description: Guide phone number
+          example: "+1234567890"
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+          description: Verification status
+          example: "pending"
+        nicDocument:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to NIC document
+          example: "https://storage.example.com/nic-doc.pdf"
+        touristDeptIdDocument:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to Tourist Department ID document
+          example: "https://storage.example.com/tourist-dept-id.pdf"
+        policeReportDocument:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to Police Report document
+          example: "https://storage.example.com/police-report.pdf"
+        rejectionReason:
+          type: string
+          nullable: true
+          description: Reason for rejection (if rejected)
+          example: "Documents are not clear"
+        reviewedBy:
+          type: string
+          nullable: true
+          description: Admin who reviewed the verification
+          example: "admin"
+        reviewedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Review timestamp
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Verification creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Verification last update timestamp
+    GetGuideVerificationsResponse:
+      type: object
+      required:
+        - success
+        - code
+        - data
+        - pagination
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuideVerification'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        filters:
+          type: object
+          properties:
+            search:
+              type: string
+              description: Applied search term
+            status:
+              type: string
+              description: Applied status filter
+            sortBy:
+              type: string
+              description: Applied sort field
+            sortOrder:
+              type: string
+              description: Applied sort order
+    GetGuideBookingsResponse:
+      type: object
+      required:
+        - success
+        - code
+        - data
+        - pagination
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Booking'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        filters:
+          type: object
+          properties:
+            search:
+              type: string
+            status:
+              type: string
+            sortBy:
+              type: string
+            sortOrder:
+              type: string
+    Review:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "REV-001"
+        bookingId:
+          type: string
+          example: "BOOKING-001"
+        touristId:
+          type: string
+          example: "TOURIST-001"
+        touristName:
+          type: string
+          example: "John Doe"
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        comment:
+          type: string
+          example: "Excellent guide!"
+        createdAt:
+          type: string
+          format: date-time
+    GetGuideReviewsResponse:
+      type: object
+      required:
+        - success
+        - code
+        - data
+        - pagination
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        data:
+          type: object
+          properties:
+            overallStats:
+              type: object
+              properties:
+                averageRating:
+                  type: number
+                  example: 4.5
+                totalReviews:
+                  type: integer
+                  example: 25
+                ratingDistribution:
+                  type: object
+                  properties:
+                    "5":
+                      type: integer
+                      example: 15
+                    "4":
+                      type: integer
+                      example: 7
+                    "3":
+                      type: integer
+                      example: 2
+                    "2":
+                      type: integer
+                      example: 1
+                    "1":
+                      type: integer
+                      example: 0
+            reviews:
+              type: array
+              items:
+                $ref: '#/components/schemas/Review'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "TXN-001"
+        type:
+          type: string
+          enum: [earning, payout, refund]
+          example: "earning"
+        amount:
+          type: number
+          format: float
+          example: 15000
+        status:
+          type: string
+          enum: [pending, cleared, completed, failed]
+          example: "completed"
+        description:
+          type: string
+          example: "Tour booking payment"
+        bookingId:
+          type: string
+          nullable: true
+          example: "BOOKING-001"
+        createdAt:
+          type: string
+          format: date-time
+    GetGuidePayoutsResponse:
+      type: object
+      required:
+        - success
+        - code
+        - data
+        - pagination
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        data:
+          type: object
+          properties:
+            overview:
+              type: object
+              properties:
+                totalEarnings:
+                  type: number
+                  example: 150000
+                pendingPayouts:
+                  type: number
+                  example: 50000
+                clearedPayouts:
+                  type: number
+                  example: 100000
+            transactions:
+              type: array
+              items:
+                $ref: '#/components/schemas/Transaction'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    GuidePricing:
+      type: object
+      properties:
+        baseRate:
+          type: number
+          format: float
+          description: Base hourly rate
+          example: 2000
+        dailyRate:
+          type: number
+          format: float
+          description: Daily rate
+          example: 15000
+        customPackages:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
+              price:
+                type: number
+              duration:
+                type: string
+        seasonalAdjustments:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              season:
+                type: string
+              multiplier:
+                type: number
+              startDate:
+                type: string
+                format: date
+              endDate:
+                type: string
+                format: date
+    GuidePricingResponse:
+      type: object
+      required:
+        - success
+        - code
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        data:
+          $ref: '#/components/schemas/GuidePricing'
+    GuideProfile:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Guide"
+        phone:
+          type: string
+          example: "+1234567890"
+        bio:
+          type: string
+          example: "Experienced tour guide"
+        languages:
+          type: array
+          items:
+            type: string
+          example: ["English", "Sinhala"]
+        specialties:
+          type: array
+          items:
+            type: string
+          example: ["Cultural Tours", "Wildlife"]
+        notificationSettings:
+          type: object
+          properties:
+            emailNotifications:
+              type: boolean
+            smsNotifications:
+              type: boolean
+            bookingAlerts:
+              type: boolean
+        securitySettings:
+          type: object
+          properties:
+            twoFactorEnabled:
+              type: boolean
+    GuideProfileResponse:
+      type: object
+      required:
+        - success
+        - code
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        data:
+          $ref: '#/components/schemas/GuideProfile'
+
+  /api/guide/upload-documents:
+    post:
+      tags:
+        - Guide
+      summary: Upload verification documents
+      description: |
+        Upload verification documents for a guide (NIC, Tourist Department ID, Police Report).
+        Documents can be provided as base64 encoded data URLs or as existing URLs.
+        If base64, they will be uploaded to Firebase Storage and URLs will be returned.
+      operationId: uploadDocuments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: string
+                  description: Guide user ID
+                  example: "guide-uid-123"
+                nicDocument:
+                  type: string
+                  description: NIC document as base64 data URL or existing URL
+                  example: "data:application/pdf;base64,JVBERi0xLjQK..."
+                touristDeptIdDocument:
+                  type: string
+                  description: Tourist Department ID document as base64 data URL or existing URL
+                  example: "data:application/pdf;base64,JVBERi0xLjQK..."
+                policeReportDocument:
+                  type: string
+                  description: Police Report document as base64 data URL or existing URL
+                  example: "data:application/pdf;base64,JVBERi0xLjQK..."
+      responses:
+        '200':
+          description: Documents uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "Documents uploaded successfully"
+                  data:
+                    type: object
+                    properties:
+                      nicDocument:
+                        type: string
+                        format: uri
+                        example: "https://storage.example.com/guide-verifications/guide-uid-123/nic-1234567890.pdf"
+                      touristDeptIdDocument:
+                        type: string
+                        format: uri
+                        example: "https://storage.example.com/guide-verifications/guide-uid-123/tourist-dept-1234567890.pdf"
+                      policeReportDocument:
+                        type: string
+                        format: uri
+                        example: "https://storage.example.com/guide-verifications/guide-uid-123/police-report-1234567890.pdf"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                code: 400
+                error: "Bad Request"
+                message: "userId is required"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                code: 404
+                error: "Not Found"
+                message: "User not found"
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
