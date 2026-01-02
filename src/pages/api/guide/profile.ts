@@ -180,6 +180,7 @@ export default async function handler(
 
       await updateDoc(guideRef, guideUpdateData);
 
+      
       // Fetch updated data
       const updatedGuideSnap = await getDoc(guideRef);
       const updatedGuideData = updatedGuideSnap.exists() ? updatedGuideSnap.data() : {};
